@@ -4,15 +4,15 @@ import (
 	"github.com/spf13/viper"
 )
 
-type conf struct {
+type Conf struct {
 	MaxIpRequests    string
 	MaxTokenRequests string
 	CleanupInterval  string
 	WebServerPort    string
 }
 
-func LoadConfig(path string) (*conf, error) {
-	var cfg *conf
+func LoadConfig(path string) (*Conf, error) {
+	var cfg *Conf
 	viper.SetConfigName("config")
 	viper.SetConfigType("env")
 	viper.AddConfigPath(path)
