@@ -24,6 +24,9 @@ func LoadTest() {
 				return
 			}
 			req.Header.Add("X-Forwarded-For", getIp())
+			if withToken() {
+				req.Header.Add("API_KEY", "1234567890")
+			}
 
 			resp, err := client.Do(req)
 			if err != nil {
@@ -48,4 +51,9 @@ func getIp() string {
 	ips := []string{"192.168.0.1:1010", "192.168.0.2:1010", "192.168.0.3:1010"}
 	randomIndex := rand.Intn(len(ips))
 	return ips[randomIndex]
+}
+
+func withToken() bool {
+	randomIndex := rand.Intn(9) + 1
+	return randomIndex%2 == 0
 }
