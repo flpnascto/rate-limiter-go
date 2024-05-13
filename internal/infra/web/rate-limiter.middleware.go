@@ -9,8 +9,8 @@ import (
 )
 
 func RateLimiterMiddleware(next http.Handler) http.Handler {
-	ipRateLimiter := entity.NewRateLimiter(5)
-	tokenRateLimiter := entity.NewRateLimiter(6)
+	ipRateLimiter := entity.NewRateLimiter(5, 5)
+	tokenRateLimiter := entity.NewRateLimiter(6, 3)
 	var message string
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if apiKey := r.Header.Get("API_KEY"); apiKey != "" {

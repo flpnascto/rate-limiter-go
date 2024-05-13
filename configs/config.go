@@ -9,6 +9,8 @@ type Conf struct {
 	MaxTokenRequests string
 	CleanupInterval  string
 	WebServerPort    string
+	IpBlockTime      string
+	TokenBlockTime   string
 }
 
 func LoadConfig(path string) (*Conf, error) {

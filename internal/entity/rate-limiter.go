@@ -15,13 +15,16 @@ type Visitor struct {
 type RateLimiter struct {
 	visitors    []Visitor
 	maxRequests int
+	blockTime   int
 	mu          sync.Mutex
 }
 
-func NewRateLimiter(limit int) *RateLimiter {
+func NewRateLimiter(limit int, block int) *RateLimiter {
+
 	r := &RateLimiter{
 		visitors:    []Visitor{},
 		maxRequests: limit,
+		blockTime:   block,
 	}
 
 	go r.cleanup()
@@ -72,8 +75,14 @@ func (r *RateLimiter) cleanup() {
 		r.mu.Lock()
 		newVisitors := make([]Visitor, 0)
 		for _, y := range r.visitors {
-			if time.Since(y.created) <= 1*time.Second {
-				newVisitors = append(newVisitors, y)
+			if y.requests > r.maxRequests {
+				if time.Since(y.created) > time.Duration(r.blockTime)*time.Second {
+					newVisitors = append(newVisitors, y)
+				}
+			} else {
+				if time.Since(y.created) <= 1*time.Second {
+					newVisitors = append(newVisitors, y)
+				}
 			}
 		}
 		r.visitors = newVisitors
