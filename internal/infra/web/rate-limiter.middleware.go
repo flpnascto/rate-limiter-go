@@ -5,25 +5,28 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/flpnascto/rate-limiter-go/configs"
 	"github.com/flpnascto/rate-limiter-go/internal/entity"
 )
 
-func RateLimiterMiddleware(next http.Handler) http.Handler {
-	ipRateLimiter := entity.NewRateLimiter(5, 5)
-	tokenRateLimiter := entity.NewRateLimiter(6, 3)
-	var message string
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if apiKey := r.Header.Get("API_KEY"); apiKey != "" {
-			message = requestWithToken(r, tokenRateLimiter)
-		} else {
-			message = requestWithIp(r, ipRateLimiter)
-		}
-		if message != "" {
-			http.Error(w, message, http.StatusTooManyRequests)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+func RateLimiterMiddleware(cfg *configs.Conf) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		ipRateLimiter := entity.NewRateLimiter(cfg.MaxIpRequests, cfg.IpBlockTime)
+		tokenRateLimiter := entity.NewRateLimiter(cfg.MaxTokenRequests, cfg.TokenBlockTime)
+		var message string
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if apiKey := r.Header.Get("API_KEY"); apiKey != "" {
+				message = requestWithToken(r, tokenRateLimiter)
+			} else {
+				message = requestWithIp(r, ipRateLimiter)
+			}
+			if message != "" {
+				http.Error(w, message, http.StatusTooManyRequests)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func requestWithToken(r *http.Request, ipRateLimiter *entity.RateLimiter) string {

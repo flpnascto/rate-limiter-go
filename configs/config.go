@@ -5,12 +5,12 @@ import (
 )
 
 type Conf struct {
-	MaxIpRequests    string
-	MaxTokenRequests string
+	MaxIpRequests    int
+	MaxTokenRequests int
 	CleanupInterval  string
 	WebServerPort    string
-	IpBlockTime      string
-	TokenBlockTime   string
+	IpBlockTime      int
+	TokenBlockTime   int
 }
 
 func LoadConfig(path string) (*Conf, error) {

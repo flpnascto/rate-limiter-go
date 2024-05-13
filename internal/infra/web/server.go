@@ -13,7 +13,7 @@ import (
 func NewWebServer(cfg *configs.Conf) {
 	r := chi.NewRouter()
 	r.Use(middleware.RealIP)
-	r.Use(RateLimiterMiddleware)
+	r.Use(RateLimiterMiddleware(cfg))
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("pong"))
