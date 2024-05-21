@@ -2,21 +2,32 @@ package audit
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 func LoadTest() {
-	loadScenarios := []int{10, 25, 50, 100} // Diferentes níveis de carga
+	loadScenarios := []int{10, 25, 50, 100, 500}
 	for _, numRequests := range loadScenarios {
 		fmt.Printf(" === Iniciando teste com %d requisições ===\n", numRequests)
 		runLoadTest(numRequests)
-		time.Sleep(10 * time.Second) // Intervalo entre cenários para evitar sobrecarga contínua
+		time.Sleep(setInterval() * time.Second)
 	}
+}
+
+func setInterval() time.Duration {
+	var interval time.Duration
+	if viper.GetInt("IpBlockTime") > viper.GetInt("TokenBlockTime") {
+		interval = time.Duration(viper.GetInt("IpBlockTime"))
+	} else {
+		interval = time.Duration(viper.GetInt("TokenBlockTime"))
+	}
+	return interval
 }
 
 func runLoadTest(numRequests int) {
@@ -44,21 +55,12 @@ func runLoadTest(numRequests int) {
 
 			resp, err := client.Do(req)
 			if err != nil {
-				log.Println("Error making request:", err)
 				errorLock.Lock()
 				errorCount++
 				errorLock.Unlock()
 				return
 			}
 			defer resp.Body.Close()
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				log.Println("Error reading response body:", err)
-				errorLock.Lock()
-				errorCount++
-				errorLock.Unlock()
-				return
-			}
 
 			if resp.StatusCode == http.StatusTooManyRequests {
 				rateLimitLock.Lock()
@@ -74,8 +76,7 @@ func runLoadTest(numRequests int) {
 				errorLock.Unlock()
 			}
 
-			fmt.Println("Http Code", resp.StatusCode, "message:", string(body), "at ", time.Now().Local())
-			time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simula tráfego real com atraso aleatório
+			time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
 
 		}()
 	}
