@@ -40,12 +40,14 @@ func (c *VerifyLimiterUseCase) Execute(limiter *entity.Limiter) error {
 		if c.limitExceeded(&result) {
 			result.Block = true
 			log.Println("UseCase error exceeded :", result)
-			return errors.New("too many requests")
+			return errors.New("Rate limit exceeded")
 		}
 		log.Println("UseCase result:", &result)
 		err = c.LimiterRepository.Update(&result, c.setDuration(limiter))
 		log.Println("UseCase error 3:", err)
-		return err
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

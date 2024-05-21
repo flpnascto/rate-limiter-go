@@ -28,8 +28,12 @@ func LimiterMiddleware(LimiterRepository entity.LimiterRepositoryInterface) func
 			log.Println("Limiter:", limiter)
 			err := usecases.NewVerifyLimiterUseCase(LimiterRepository).Execute(limiter)
 			if err != nil {
+				if err.Error() == "Rate limit exceeded" {
+					http.Error(w, err.Error(), http.StatusTooManyRequests)
+					return
+				}
 				log.Println("LimiterMiddleware - Error 2:", err)
-				http.Error(w, err.Error(), http.StatusUnauthorized)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			next.ServeHTTP(w, r)
