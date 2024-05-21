@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/flpnascto/rate-limiter-go/internal/entity"
@@ -22,7 +21,6 @@ func NewRedisClient(db *redis.Client) *RedisClient {
 var ctx = context.Background()
 
 func (r *RedisClient) Create(limiter *entity.Limiter, duration time.Duration) error {
-	log.Println("REDIS CREATE -> limiter:", limiter)
 	data, err := json.Marshal(limiter)
 	if err != nil {
 		return fmt.Errorf("failed to serialize limiter: %w", err)
@@ -37,9 +35,7 @@ func (r *RedisClient) Create(limiter *entity.Limiter, duration time.Duration) er
 }
 
 func (r *RedisClient) GetByIp(ip string) (entity.Limiter, error) {
-	log.Println("REDIS GET BY IP -> ip:", ip)
 	val, err := r.Db.Get(ctx, ip).Result()
-	log.Println("REDIS GET BY IP -> val:", val)
 
 	if err == redis.Nil {
 		return entity.Limiter{}, fmt.Errorf("no limiter found for IP: %s", ip)
@@ -52,13 +48,11 @@ func (r *RedisClient) GetByIp(ip string) (entity.Limiter, error) {
 	if err != nil {
 		return entity.Limiter{}, fmt.Errorf("failed to deserialize limiter: %w", err)
 	}
-	log.Println("REDIS GET BY IP -> limiter:", limiter)
 
 	return limiter, nil
 }
 
 func (r *RedisClient) Update(limiter *entity.Limiter, duration time.Duration) error {
-	log.Println("REDIS UPDATE -> limiter:", limiter)
 	data, err := json.Marshal(limiter)
 	if err != nil {
 		return fmt.Errorf("failed to serialize limiter: %w", err)
@@ -78,7 +72,6 @@ func (r *RedisClient) Delete(ip string) error {
 
 func (r *RedisClient) List() ([]entity.Limiter, error) {
 	keys, err := r.Db.Keys(ctx, "*").Result()
-	log.Println("REDIS LIST -> keys:", keys)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get keys from Redis: %w", err)
 	}
@@ -88,7 +81,7 @@ func (r *RedisClient) List() ([]entity.Limiter, error) {
 		value, err := r.Db.Get(ctx, key).Result()
 		if err != nil {
 			if err == redis.Nil {
-				continue // key does not exist
+				continue
 			} else {
 				return nil, fmt.Errorf("failed to get value for key %s from Redis: %w", key, err)
 			}
