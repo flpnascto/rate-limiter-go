@@ -3,6 +3,7 @@ package usecases
 import (
 	"errors"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/flpnascto/rate-limiter-go/internal/entity"
@@ -11,6 +12,7 @@ import (
 
 type VerifyLimiterUseCase struct {
 	LimiterRepository entity.LimiterRepositoryInterface
+	mu                sync.Mutex
 }
 
 func NewVerifyLimiterUseCase(limiterRepository entity.LimiterRepositoryInterface) *VerifyLimiterUseCase {
@@ -20,34 +22,28 @@ func NewVerifyLimiterUseCase(limiterRepository entity.LimiterRepositoryInterface
 }
 
 func (c *VerifyLimiterUseCase) Execute(limiter *entity.Limiter) error {
-	log.Println("UseCase:", limiter)
-	var err error
-	result, err := c.LimiterRepository.GetByIp(limiter.Ip)
-	log.Println("UseCase result:", result)
-	if err != nil {
-		log.Println("UseCase error 1:", err)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	result, _ := c.LimiterRepository.GetByIp(limiter.Ip)
+
+	if c.limitExceeded(&result) {
+		result.Block = true
+		c.LimiterRepository.Update(&result, c.setDuration(limiter))
+		return errors.New("Rate limit exceeded")
 	}
 
 	if result.Ip == "" {
-		err = c.LimiterRepository.Create(limiter, c.setDuration(limiter))
+		err := c.LimiterRepository.Create(limiter, c.setDuration(limiter))
 		if err != nil {
 			log.Println("UseCase error 2:", err)
 			return err
 		}
 		return nil
-	} else {
-		result.Requests++
-		if c.limitExceeded(&result) {
-			result.Block = true
-			log.Println("UseCase error exceeded :", result)
-			return errors.New("Rate limit exceeded")
-		}
-		log.Println("UseCase result:", &result)
-		err = c.LimiterRepository.Update(&result, c.setDuration(limiter))
-		log.Println("UseCase error 3:", err)
-		if err != nil {
-			return err
-		}
+	}
+	result.Requests++
+	err := c.LimiterRepository.Update(&result, c.setDuration(limiter))
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -57,7 +53,7 @@ func (c *VerifyLimiterUseCase) limitExceeded(limiter *entity.Limiter) bool {
 		return true
 	}
 	var maxRequests int
-	if limiter.Token != nil {
+	if limiter.Token == "" {
 		maxRequests = viper.GetInt("MaxIpRequests")
 	} else {
 		maxRequests = viper.GetInt("MaxTokenRequests")
@@ -70,7 +66,7 @@ func (c *VerifyLimiterUseCase) setDuration(limiter *entity.Limiter) time.Duratio
 		return time.Second
 	}
 	var quantity int
-	if limiter.Token != nil {
+	if limiter.Token == "" {
 		quantity = viper.GetInt("TokenBlockDuration")
 	} else {
 		quantity = viper.GetInt("IpBlockDuration")
