@@ -1,18 +1,34 @@
 package main
 
 import (
+	"log"
+
 	"github.com/flpnascto/rate-limiter-go/audit"
-	"github.com/flpnascto/rate-limiter-go/configs"
+	"github.com/flpnascto/rate-limiter-go/internal/infra/database"
 	"github.com/flpnascto/rate-limiter-go/internal/infra/web"
+	"github.com/redis/go-redis/v9"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	configs, err := configs.LoadConfig(".")
+func init() {
+	viper.SetConfigFile("./cmd/config.json")
+	err := viper.ReadInConfig()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error loading config file: %s", err)
 	}
+	viper.AutomaticEnv()
+}
 
-	go web.NewWebServer(configs)
+func main() {
+
+	client := redis.NewClient(&redis.Options{
+		Addr:     "redis:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	db := database.NewRedisClient(client)
+	go web.NewWebServer(db)
 
 	audit.LoadTest()
 

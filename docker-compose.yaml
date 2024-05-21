@@ -2,6 +2,16 @@ version: '3'
 
 services:
   goserver:
-    build: .
+    image: golang:1.22
+    volumes:
+      - ./:/go/src/app
     ports:
       - "8080:8080"
+    working_dir: /go/src/app
+    command: tail -f /dev/null
+
+  redis:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - "6379:6379"

@@ -1,0 +1,9 @@
+{
+  "WebServerPort": ":8080",
+  "MaxIpRequests": 5,
+  "MaxTokenRequests": 6,
+  "CleanupInterval": 30,
+  "IpBlockTime": 15,
+  "TokenBlockTime": 3000
+}
+

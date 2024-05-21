@@ -1,0 +1,5 @@
+### PING PONG
+GET http://localhost:8080/api/ping
+
+### LISTA
+GET http://localhost:8080/api/list
