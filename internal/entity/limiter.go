@@ -4,13 +4,13 @@ import "time"
 
 type Limiter struct {
 	Ip       string
-	Token    *string
+	Token    string
 	Requests int8
 	Block    bool
 	Time     time.Time
 }
 
-func NewLimiter(ip string, token *string) *Limiter {
+func NewLimiter(ip string, token string) *Limiter {
 	return &Limiter{
 		Ip:       ip,
 		Token:    token,
