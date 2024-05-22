@@ -11,6 +11,7 @@ import (
 func LimiterMiddleware(LimiterRepository entity.LimiterRepositoryInterface) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			manyRequestMessage := "you have reached the maximum number of requests or actions allowed within a certain time frame"
 			ip := r.RemoteAddr
 			if ip != "" {
 				host, _, err := net.SplitHostPort(ip)
@@ -24,7 +25,7 @@ func LimiterMiddleware(LimiterRepository entity.LimiterRepositoryInterface) func
 			err := usecases.NewVerifyLimiterUseCase(LimiterRepository).Execute(limiter)
 			if err != nil {
 				if err.Error() == "Rate limit exceeded" {
-					http.Error(w, err.Error(), http.StatusTooManyRequests)
+					http.Error(w, manyRequestMessage, http.StatusTooManyRequests)
 					return
 				}
 				http.Error(w, err.Error(), http.StatusInternalServerError)
