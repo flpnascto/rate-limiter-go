@@ -7,30 +7,12 @@ import (
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/spf13/viper"
 )
 
-func LoadTest() {
-	loadScenarios := []int{10, 25, 50, 100, 500}
-	for _, numRequests := range loadScenarios {
-		fmt.Printf(" === Iniciando teste com %d requisições ===\n", numRequests)
-		runLoadTest(numRequests)
-		time.Sleep(setInterval() * time.Second)
-	}
-}
+func LoadTest(numRequests int) {
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
 
-func setInterval() time.Duration {
-	var interval time.Duration
-	if viper.GetInt("IpBlockTime") > viper.GetInt("TokenBlockTime") {
-		interval = time.Duration(viper.GetInt("IpBlockTime"))
-	} else {
-		interval = time.Duration(viper.GetInt("TokenBlockTime"))
-	}
-	return interval
-}
-
-func runLoadTest(numRequests int) {
 	var wg sync.WaitGroup
 
 	var successCount, rateLimitedCount, errorCount int
@@ -48,9 +30,9 @@ func runLoadTest(numRequests int) {
 				log.Println("Error creating request:", err)
 				return
 			}
-			req.Header.Add("X-Forwarded-For", getIp())
-			if withToken() {
-				req.Header.Add("API_KEY", getToken())
+			req.Header.Add("X-Forwarded-For", getIp(*r))
+			if withToken(*r) {
+				req.Header.Add("API_KEY", getToken(*r))
 			}
 
 			resp, err := client.Do(req)
@@ -75,9 +57,7 @@ func runLoadTest(numRequests int) {
 				errorCount++
 				errorLock.Unlock()
 			}
-
-			time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
-
+			time.Sleep(time.Duration(r.Intn(100)) * time.Millisecond)
 		}()
 	}
 	wg.Wait()
@@ -87,19 +67,19 @@ func runLoadTest(numRequests int) {
 	fmt.Printf("Sucesso: %d, Limitado: %d, Erros: %d\n", successCount, rateLimitedCount, errorCount)
 }
 
-func getIp() string {
+func getIp(r rand.Rand) string {
 	ips := []string{"192.168.0.1:1010", "192.168.0.2:1010", "192.168.0.3:1010"}
-	randomIndex := rand.Intn(len(ips))
+	randomIndex := r.Intn(len(ips))
 	return ips[randomIndex]
 }
 
-func getToken() string {
+func getToken(r rand.Rand) string {
 	tokens := []string{"abc123", "def456", "ghi789"}
-	randomIndex := rand.Intn(len(tokens))
+	randomIndex := r.Intn(len(tokens))
 	return tokens[randomIndex]
 }
 
-func withToken() bool {
-	randomIndex := rand.Intn(9) + 1
+func withToken(r rand.Rand) bool {
+	randomIndex := r.Intn(9) + 1
 	return randomIndex%2 == 0
 }
