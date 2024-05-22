@@ -33,14 +33,24 @@ Além disto é bom ter um editor para trabalhar com o código como VSCode.
    git clone git@github.com:flpnascto/rate-limiter-go.git
    ```
 2. Acessar a pasta do repositório local e instanciar o Docker
-   - Execute o comando `docker-compose up`
+   - Execute o comando `docker-compose up -d`
+   - O webserver já estará em execução na porta 8080 (padrão)
 
-3. Verificar os resultados do teste de carga
-  - No Docker Desktop abra o container `goserver` e acesse o terminal
+3. Realizar requisições via terminal
+  - Requisição padrão: `curl localhost:8080/api/ping`
+  - Requisição com token: `curl -H "API_KEY: ab123" http://localhost:8080/api/ping`
 
-4. Alterando as configurações do rate limiter
+4. Realizar requisições com REST CLient
+  - Na raiz do repositório existe um arquivo api.http com dois exemplos de requisição, considerando o caso de haver ou não um token.
+  - Para utilizar este arquivo é necessário a extensão **REST Client** instalada no VSCode
+
+5. Realizar o teste do teste de carga
+  - No Docker Desktop abra o container `goserver` e acesse o terminal do contêiner
+  - Execute no terminal o comando `go test audit/test_test.go`
+
+6. Alterando as configurações do rate limiter
   - Acesse o arquivo ./cmd/config.json para alterar
     - A quantidade máxima de requisições por segundo por IP ou TOKEN
     - O tempo, em segundos, de bloqueio para requisições que estão acima do limite
-
-
+  - Caso realize alterações neste arquivo é necessário recriar o docker compose
+    - Utilize o comando `docker-compose up -d --build`
