@@ -17,7 +17,7 @@ func NewWebServer(db entity.LimiterRepositoryInterface) {
 	log.Println("Starting server...")
 	r := chi.NewRouter()
 	r.Use(middleware.RealIP)
-
+	r.Use(middleware.Logger)
 	r.Use(LimiterMiddleware(db))
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
