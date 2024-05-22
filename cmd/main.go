@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 
-	"github.com/flpnascto/rate-limiter-go/audit"
 	"github.com/flpnascto/rate-limiter-go/internal/infra/database"
 	"github.com/flpnascto/rate-limiter-go/internal/infra/web"
 	"github.com/redis/go-redis/v9"
@@ -28,8 +27,5 @@ func main() {
 	})
 
 	db := database.NewRedisClient(client)
-	go web.NewWebServer(db)
-
-	audit.LoadTest()
-
+	web.NewWebServer(db)
 }
