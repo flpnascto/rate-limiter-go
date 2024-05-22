@@ -2,16 +2,21 @@ version: '3'
 
 services:
   goserver:
-    image: golang:1.22
-    volumes:
-      - ./:/go/src/app
+    build: .
     ports:
       - "8080:8080"
-    working_dir: /go/src/app
-    command: tail -f /dev/null
+    working_dir: /app
+    command: ./ratelimiter
+    depends_on:
+      - redis
 
   redis:
     image: redis:6.2-alpine
     restart: always
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
