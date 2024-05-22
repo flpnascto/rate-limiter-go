@@ -1,5 +1,6 @@
-### PING PONG
-GET http://localhost:8080/api/ping
+### REQUEST
+GET http://localhost:8080/api/ping HTTP/1.1
 
-### LISTA
-GET http://localhost:8080/api/list
+### REQUEST WITH TOKEN
+GET http://localhost:8080/api/ping HTTP/1.1
+API_KEY: abc123
